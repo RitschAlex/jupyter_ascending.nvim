@@ -98,7 +98,7 @@ function M.sync()
 		"--filename",
 		file_name,
 	})
-	vim.notify("Syncing Jupyter Notebook ...", vim.log.levels.INFO)
+	vim.api.nvim_echo({ { "Syncing Jupyter Notebook ...", "Normal" } }, false, {})
 end
 
 -- Execute the current cell in Jupyter
@@ -114,7 +114,11 @@ function M.execute()
 		tostring(get_current_line()),
 	})
 
-	vim.notify("Executing current cell ...", vim.log.levels.INFO)
+	vim.api.nvim_echo(
+		{ { "Executing current cell under in line: " .. tostring(get_current_line()), "Normal" } },
+		false,
+		{}
+	)
 end
 
 -- Execute all cells in the current file
@@ -127,7 +131,7 @@ function M.execute_all()
 		"--filename",
 		file_name,
 	})
-	vim.notify("Executing all cells ...", vim.log.levels.INFO)
+	vim.api.nvim_echo({ { "Executing all cells ", "Normal" } }, false, {})
 end
 
 -- Restart the Jupyter kernel
@@ -144,7 +148,7 @@ function M.restart()
 		"--filename",
 		file_name,
 	})
-	vim.notify("Restarting the kernel ...", vim.log.levels.INFO)
+	vim.api.nvim_echo({ { "Restarting the kernel ...", "Normal" } }, false, {})
 end
 
 -------------------------------------------------------------------------------
