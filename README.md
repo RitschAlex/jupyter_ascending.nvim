@@ -22,7 +22,7 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 
 ```lua
 {
-    "your-username/jupyter-ascending.nvim",
+    "RitschAlex/jupyter-ascending.nvim",
     config = function()
         require("navi.jupyter_ascending").setup()
     end,
@@ -33,7 +33,7 @@ Using [packer.nvim](https://github.com/wbthomason/packer.nvim):
 
 ```lua
 use {
-    "your-username/jupyter-ascending.nvim",
+    "RitschAlex/jupyter-ascending.nvim",
     config = function()
         require("navi.jupyter_ascending").setup()
     end
@@ -45,7 +45,7 @@ use {
 The plugin comes with sensible defaults but can be customized using the setup function:
 
 ```lua
-require("navi.jupyter_ascending").setup({
+require("jupyter_ascending").setup({
     -- Path to Python executable (default: "python")
     python_executable = "python",
     
