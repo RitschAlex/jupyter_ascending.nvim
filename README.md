@@ -1,4 +1,4 @@
-# Jupyter Ascending.nvim
+# Jupyter_Ascending.nvim
 
 A Neovim plugin for seamless integration with Jupyter notebooks through [Jupyter Ascending](https://github.com/imbue-ai/jupyter_ascending). This plugin allows you to edit and execute Jupyter notebooks using regular Python files while maintaining synchronization with the notebook format.
 
