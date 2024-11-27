@@ -165,7 +165,7 @@ function M.setup(opts)
 			pattern = "*.sync.py",
 			group = group,
 			callback = function()
-				require("jupyter_ascending.nvim").sync()
+				M.sync()
 			end,
 			desc = "Sync Jupyter notebook on save",
 		})
