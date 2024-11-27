@@ -24,7 +24,7 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 {
     "RitschAlex/jupyter-ascending.nvim",
     config = function()
-        require("navi.jupyter_ascending").setup()
+        require("jupyter_ascending").setup()
     end,
 }
 ```
@@ -35,7 +35,7 @@ Using [packer.nvim](https://github.com/wbthomason/packer.nvim):
 use {
     "RitschAlex/jupyter-ascending.nvim",
     config = function()
-        require("navi.jupyter_ascending").setup()
+        require("jupyter_ascending").setup()
     end
 }
 ```
@@ -79,16 +79,16 @@ The plugin exposes the following Lua functions:
 
 ```lua
 -- Sync the current file with its corresponding Jupyter notebook
-require("navi.jupyter_ascending").sync()
+require("jupyter_ascending").sync()
 
 -- Execute the current cell
-require("navi.jupyter_ascending").execute()
+require("jupyter_ascending").execute()
 
 -- Execute all cells in the current file
-require("navi.jupyter_ascending").execute_all()
+require("jupyter_ascending").execute_all()
 
 -- Restart the Jupyter kernel
-require("navi.jupyter_ascending").restart()
+require("jupyter_ascending").restart()
 ```
 
 ## Custom Keymaps
@@ -96,21 +96,21 @@ require("navi.jupyter_ascending").restart()
 If you prefer to set up your own keymaps, disable the default mappings in the setup and define your own:
 
 ```lua
-require("navi.jupyter_ascending").setup({
+require("jupyter_ascending").setup({
     default_mappings = false,
 })
 
 -- Set up custom keymaps
 vim.keymap.set("n", "<leader>je", function()
-    require("navi.jupyter_ascending").execute()
+    require("jupyter_ascending").execute()
 end, { desc = "Execute current Jupyter cell" })
 
 vim.keymap.set("n", "<leader>ja", function()
-    require("navi.jupyter_ascending").execute_all()
+    require("jupyter_ascending").execute_all()
 end, { desc = "Execute all Jupyter cells" })
 
 vim.keymap.set("n", "<leader>jr", function()
-    require("navi.jupyter_ascending").restart()
+    require("jupyter_ascending").restart()
 end, { desc = "Restart Jupyter kernel" })
 ```
 
