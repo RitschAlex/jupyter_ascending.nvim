@@ -30,7 +30,7 @@ local function execute_command(cmd, opts)
 			if data and data ~= "" then
 				if not data:match("^Logging Jupyter Ascending") then
 					vim.schedule(function()
-						vim.notify("[JupyterAscending] " .. data:gsub("\n$", ""), vim.log.levels.INFO)
+						vim.api.nvim_echo("[JupyterAscending] " .. data:gsub("\n$", ""), false, {})
 					end)
 				end
 			end
@@ -98,6 +98,7 @@ function M.sync()
 		"--filename",
 		file_name,
 	})
+
 	vim.api.nvim_echo({ { "Syncing Jupyter Notebook ...", "Normal" } }, false, {})
 end
 
@@ -131,6 +132,7 @@ function M.execute_all()
 		"--filename",
 		file_name,
 	})
+
 	vim.api.nvim_echo({ { "Executing all cells ", "Normal" } }, false, {})
 end
 
@@ -148,6 +150,7 @@ function M.restart()
 		"--filename",
 		file_name,
 	})
+
 	vim.api.nvim_echo({ { "Restarting the kernel ...", "Normal" } }, false, {})
 end
 
@@ -169,7 +172,9 @@ function M.setup(opts)
 			pattern = "*.sync.py",
 			group = group,
 			callback = function()
-				M.sync()
+				vim.schedule(function()
+					M.sync()
+				end)
 			end,
 			desc = "Sync Jupyter notebook on save",
 		})
