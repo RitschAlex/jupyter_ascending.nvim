@@ -1,6 +1,6 @@
 # Jupyter_Ascending.nvim
 
-A Neovim plugin for seamless integration with Jupyter notebooks through [Jupyter Ascending](https://github.com/imbue-ai/jupyter_ascending). This plugin allows you to edit and execute Jupyter notebooks using regular Python files while maintaining synchronization with the notebook format.
+A Neovim plugin for seamless integration with Jupyter notebooks through [Jupyter Ascending](https://github.com/RitschAlex/jupyter_ascending). This plugin allows you to edit and execute Jupyter notebooks using regular Python files while maintaining synchronization with the notebook format.
 ![](https://github.com/RitschAlex/jupyter_ascending.nvim/blob/main/demo.gif)
 
 ## Features
@@ -15,7 +15,7 @@ A Neovim plugin for seamless integration with Jupyter notebooks through [Jupyter
 
 - Neovim >= 0.9.0
 - Python 3.x
-- Jupyter Ascending package (`pip install jupyter_ascending`)
+- Jupyter Ascending package (`pip install jupyter_ascending` or `pip install git+https://github.com/RitschAlex/jupyter_ascending.git`)
 
 ## Installation
 
@@ -129,6 +129,11 @@ This creates two files:
 ```bash
 python -m jupyter notebook example.sync.ipynb
 ```
+If using `nbclassic`:
+```bash
+python -m jupyter nbclassic
+```
+The notebook has to be running at `localhost:8888/nbclassic`.
 
 3. Edit the `example.sync.py` file in Neovim
 4. Use the provided keymaps to:
