@@ -133,7 +133,7 @@ If using `nbclassic`:
 ```bash
 python -m jupyter nbclassic
 ```
-The notebook has to be running at `localhost:8888/nbclassic`.
+When using `nbclassic` the notebook has to be running at `localhost:8888/nbclassic/notebooks`.
 
 3. Edit the `example.sync.py` file in Neovim
 4. Use the provided keymaps to:
@@ -153,5 +153,5 @@ MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgments
 
-- [Jupyter Ascending](https://github.com/imbue-ai/jupyter_ascending) for the core functionality
+- [Jupyter Ascending](https://github.com/RitschAlex/jupyter_ascending) for the core functionality
 - The Neovim community for inspiration and support
