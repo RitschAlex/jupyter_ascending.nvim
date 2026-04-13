@@ -9,7 +9,7 @@ M.config = {
 	match_pattern = ".sync.py",
 	auto_write = true,
 	default_mappings = true,
-	timeout = 3000,
+	timeout = 9000,
 }
 
 -------------------------------------------------------------------------------
@@ -30,7 +30,7 @@ local function execute_command(cmd, opts)
 			if data and data ~= "" then
 				if not data:match("^Logging Jupyter Ascending") then
 					vim.schedule(function()
-						vim.api.nvim_echo("[JupyterAscending] " .. data:gsub("\n$", ""), false, {})
+						vim.api.nvim_echo({ { "[JupyterAscending] " .. data:gsub("\n$", ""), "Normal" } }, false, {})
 					end)
 				end
 			end
@@ -53,11 +53,11 @@ local function execute_command(cmd, opts)
 			vim.schedule(function()
 				vim.notify(
 					string.format(
-						"[JupyterAscending] Command failed with code %d: %s",
+						"[JupyterAscending] Command failed with (code %d): %s",
 						obj.code,
-						table.concat(cmd, " "),
-						vim.log.levels.ERROR
-					)
+						table.concat(cmd, " ")
+					),
+					vim.log.levels.ERROR
 				)
 			end)
 		end
