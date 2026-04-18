@@ -59,8 +59,8 @@ require("jupyter_ascending").setup({
     -- Enable default keymaps (default: true)
     default_mappings = true,
     
-    -- Command timeout in milliseconds (default: 3000)
-    timeout = 3000,
+    -- Command timeout in milliseconds (default: 10000)
+    timeout = 10000,
 })
 ```
 
@@ -142,6 +142,22 @@ When using `nbclassic` the notebook has to be running at `localhost:8888/nbclass
    - Restart the kernel (`<space><space>r`)
 
 The plugin will automatically sync changes to the notebook file when you save the Python file (if `auto_write` is enabled).
+
+## Planned future enhancements
+
+The following features are planned for `jupyter_ascending.nvim`:
+
+- Add cell below
+- Add cell above
+
+In addition, while improving [Jupyter Ascending](https://github.com/RitschAlex/jupyter_ascending),
+the following core features will be added:
+
+- Run all cells above
+- Run all cells below
+- Hide output
+- Clear outputs
+- Clear all outputs
 
 ## Contributing
 
