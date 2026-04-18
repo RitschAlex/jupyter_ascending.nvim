@@ -9,7 +9,7 @@ M.config = {
 	match_pattern = ".sync.py",
 	auto_write = true,
 	default_mappings = true,
-	timeout = 9000,
+	timeout = 10000,
 }
 
 -------------------------------------------------------------------------------
@@ -20,7 +20,7 @@ M.config = {
 ---@param cmd string[] Command and arguments as a table
 ---@param opts? table Additional options for vim.system
 ---@return vim.SystemObj
-local function execute_command(cmd, opts)
+local function execute_command(cmd, opts, success_msg)
 	opts = opts or {}
 
 	local system_opts = {
@@ -60,6 +60,10 @@ local function execute_command(cmd, opts)
 					vim.log.levels.ERROR
 				)
 			end)
+		elseif success_msg then
+			vim.schedule(function()
+				vim.api.nvim_echo({ { "[JupyterAscending] " .. success_msg, "Normal" } }, false, {})
+			end)
 		end
 	end)
 	return system_obj
@@ -97,14 +101,16 @@ function M.sync()
 		"jupyter_ascending.requests.sync",
 		"--filename",
 		file_name,
-	})
+	}, nil, "Synced with jupyter successfully")
 
-	vim.api.nvim_echo({ { "Syncing Jupyter Notebook ...", "Normal" } }, false, {})
+	vim.api.nvim_echo({ { "[JupyterAscending] Syncing Jupyter Notebook ...", "Normal" } }, false, {})
 end
 
 -- Execute the current cell in Jupyter
 function M.execute()
 	local file_name = vim.fn.expand("%:p")
+	local line = get_current_line()
+
 	execute_command({
 		M.config.python_executable,
 		"-m",
@@ -113,10 +119,10 @@ function M.execute()
 		file_name,
 		"--linenumber",
 		tostring(get_current_line()),
-	})
+	}, nil, "Executed cell at line: " .. tostring(line) .. " successfully")
 
 	vim.api.nvim_echo(
-		{ { "Executing current cell under in line: " .. tostring(get_current_line()), "Normal" } },
+		{ { "[JupyterAscending] Executing current cell under in line: " .. tostring(get_current_line()), "Normal" } },
 		false,
 		{}
 	)
@@ -131,9 +137,9 @@ function M.execute_all()
 		"jupyter_ascending.requests.execute_all",
 		"--filename",
 		file_name,
-	})
+	}, nil, "Executed all cells successfully")
 
-	vim.api.nvim_echo({ { "Executing all cells ", "Normal" } }, false, {})
+	vim.api.nvim_echo({ { "[JupyterAscending] Executing all cells ", "Normal" } }, false, {})
 end
 
 -- Restart the Jupyter kernel
@@ -149,9 +155,9 @@ function M.restart()
 		"jupyter_ascending.requests.restart",
 		"--filename",
 		file_name,
-	})
+	}, nil, "Kernel restarted successfully")
 
-	vim.api.nvim_echo({ { "Restarting the kernel ...", "Normal" } }, false, {})
+	vim.api.nvim_echo({ { "[JupyterAscending] Restarting the kernel ...", "Normal" } }, false, {})
 end
 
 -------------------------------------------------------------------------------
