@@ -10,6 +10,8 @@ M.config = {
 	auto_write = true,
 	default_mappings = true,
 	timeout = 10000,
+	keymap_prefix = "<space><space>",
+	command_prefix = "Jupyter",
 }
 
 -------------------------------------------------------------------------------
@@ -160,6 +162,25 @@ function M.restart()
 	vim.api.nvim_echo({ { "[JupyterAscending] Restarting the kernel ...", "Normal" } }, false, {})
 end
 
+-- Register commands
+local cmd_prefix = M.config.command_prefix
+
+vim.api.nvim_create_user_command(cmd_prefix .. "Sync", function()
+	M.sync()
+end, { desc = "Sync current file with Jupyter notebook" })
+
+vim.api.nvim_create_user_command(cmd_prefix .. "Execute", function()
+	M.execute()
+end, { desc = "Execute current Jupyter cell" })
+
+vim.api.nvim_create_user_command(cmd_prefix .. "ExecuteAll", function()
+	M.execute_all()
+end, { desc = "Execute all Jupyter cells" })
+
+vim.api.nvim_create_user_command(cmd_prefix .. "JupyterRestart", function()
+	M.restart()
+end, { desc = "Restart Jupyter kernel" })
+
 -------------------------------------------------------------------------------
 -- Setup Function
 -------------------------------------------------------------------------------
@@ -175,7 +196,7 @@ function M.setup(opts)
 	-- Set up autocommand if auto_write is true
 	if M.config.auto_write then
 		vim.api.nvim_create_autocmd("BufWritePost", {
-			pattern = "*.sync.py",
+			pattern = "*" .. M.config.match_pattern,
 			group = group,
 			callback = function()
 				vim.schedule(function()
@@ -188,8 +209,9 @@ function M.setup(opts)
 
 	-- Set up default keymaps if enabled
 	if M.config.default_mappings then
+		local keymap_prefix = M.config.keymap_prefix
 		vim.api.nvim_create_autocmd("BufRead", {
-			pattern = "*.sync.py",
+			pattern = "*" .. M.config.match_pattern,
 			group = group,
 			callback = function()
 				local keymap_opts = {
@@ -198,17 +220,17 @@ function M.setup(opts)
 				}
 
 				-- Execute current cell
-				vim.keymap.set("n", "<space><space>x", function()
+				vim.keymap.set("n", keymap_prefix .. "x", function()
 					M.execute()
 				end, vim.tbl_extend("force", keymap_opts, { desc = "Execute current Jupyter cell" }))
 
 				-- Execute all cells
-				vim.keymap.set("n", "<space><space>X", function()
+				vim.keymap.set("n", keymap_prefix .. "X", function()
 					M.execute_all()
 				end, vim.tbl_extend("force", keymap_opts, { desc = "Execute all Jupyter cells" }))
 
 				-- Restart kernel
-				vim.keymap.set("n", "<space><space>r", function()
+				vim.keymap.set("n", keymap_prefix .. "r", function()
 					M.restart()
 				end, vim.tbl_extend("force", keymap_opts, { desc = "Restart Jupyter kernel" }))
 			end,
