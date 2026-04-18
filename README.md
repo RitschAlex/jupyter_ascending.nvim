@@ -61,6 +61,12 @@ require("jupyter_ascending").setup({
     
     -- Command timeout in milliseconds (default: 10000)
     timeout = 10000,
+
+    -- Keymap Prefix (default: "<space><space>")
+    keymap_prefix = "<space><space>"
+
+    -- Command Line Prefix (default: "Jupyter")
+    command_prefix = "Jupyter"
 })
 ```
 
@@ -118,28 +124,46 @@ end, { desc = "Restart Jupyter kernel" })
 ## Usage
 
 1. Create a pair of synced Python and Jupyter notebook files:
+
 ```bash
 python -m jupyter_ascending.scripts.make_pair --base example
 ```
+
 This creates two files:
+
 - `example.sync.py`: The Python file you'll edit in Neovim
 - `example.sync.ipynb`: The Jupyter notebook file
 
 2. Start Jupyter and open the notebook:
+
 ```bash
 python -m jupyter notebook example.sync.ipynb
 ```
+
 If using `nbclassic`:
+
 ```bash
 python -m jupyter nbclassic
 ```
+
 When using `nbclassic` the notebook has to be running at `localhost:8888/nbclassic/notebooks`.
 
 3. Edit the `example.sync.py` file in Neovim
-4. Use the provided keymaps to:
+
+4. Use the provided keymaps or commands to interact with the notebook:
+
+    Keymaps:
+
    - Execute individual cells (`<space><space>x`)
    - Execute all cells (`<space><space>X`)
    - Restart the kernel (`<space><space>r`)
+
+   Commands:
+
+   - :JupyterSync
+   - :JupyterExecute
+   - :JupyterExecuteAll
+   - :JupyterRestart
 
 The plugin will automatically sync changes to the notebook file when you save the Python file (if `auto_write` is enabled).
 
