@@ -23,18 +23,29 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 
 ```lua
 {
-    "RitschAlex/jupyter-ascending.nvim",
+    "RitschAlex/jupyter_ascending.nvim",
     config = function()
         require("jupyter_ascending").setup()
     end,
 }
 ```
 
+Using [vim.pack](https://neovim.io/doc/user/pack/#vim.pack)
+
+```lua
+vim.pack.add({
+    "RitschAlex/jupyter_ascending.nvim"
+})
+
+require("jupyter_ascending").setup()
+
+```
+
 Using [packer.nvim](https://github.com/wbthomason/packer.nvim):
 
 ```lua
 use {
-    "RitschAlex/jupyter-ascending.nvim",
+    "RitschAlex/jupyter_ascending.nvim",
     config = function()
         require("jupyter_ascending").setup()
     end
