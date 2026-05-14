@@ -5,6 +5,7 @@ local M = {}
 -------------------------------------------------------------------------------
 
 M.config = {
+	enabled = false,
 	python_executable = "python",
 	match_pattern = ".sync.py",
 	auto_write = true,
@@ -90,12 +91,26 @@ local function is_sync_py_file()
 	return false
 end
 
+-- Check if plugin is enabled
+--- @return boolean
+local function check_enabled()
+	if not M.config.enabled then
+		vim.notify("[JupyterAscending] Plugin is currently disabled", vim.log.levels.WARN)
+		return false
+	end
+	return true
+end
+
 -------------------------------------------------------------------------------
 -- Core Functionality
 -------------------------------------------------------------------------------
 
 -- Sync the current file with its corresponding Jupyter notebook
 function M.sync()
+	if not check_enabled() then
+		return
+	end
+
 	local file_name = vim.fn.expand("%:p")
 	execute_command({
 		M.config.python_executable,
@@ -110,6 +125,10 @@ end
 
 -- Execute the current cell in Jupyter
 function M.execute()
+	if not check_enabled() then
+		return
+	end
+
 	local file_name = vim.fn.expand("%:p")
 	local line = get_current_line()
 
@@ -132,6 +151,10 @@ end
 
 -- Execute all cells in the current file
 function M.execute_all()
+	if not check_enabled() then
+		return
+	end
+
 	local file_name = vim.fn.expand("%:p")
 	execute_command({
 		M.config.python_executable,
@@ -146,6 +169,10 @@ end
 
 -- Restart the Jupyter kernel
 function M.restart()
+	if not check_enabled() then
+		return
+	end
+
 	local file_name = vim.fn.expand("%:p")
 	if not file_name then
 		return
@@ -162,34 +189,11 @@ function M.restart()
 	vim.api.nvim_echo({ { "[JupyterAscending] Restarting the kernel ...", "Normal" } }, false, {})
 end
 
--- Register commands
-local cmd_prefix = M.config.command_prefix
-
-vim.api.nvim_create_user_command(cmd_prefix .. "Sync", function()
-	M.sync()
-end, { desc = "Sync current file with Jupyter notebook" })
-
-vim.api.nvim_create_user_command(cmd_prefix .. "Execute", function()
-	M.execute()
-end, { desc = "Execute current Jupyter cell" })
-
-vim.api.nvim_create_user_command(cmd_prefix .. "ExecuteAll", function()
-	M.execute_all()
-end, { desc = "Execute all Jupyter cells" })
-
-vim.api.nvim_create_user_command(cmd_prefix .. "JupyterRestart", function()
-	M.restart()
-end, { desc = "Restart Jupyter kernel" })
-
 -------------------------------------------------------------------------------
 -- Setup Function
 -------------------------------------------------------------------------------
 
----@param opts table? Optional configuration table to override defaults
-function M.setup(opts)
-	-- Merge user config with defaults
-	M.config = vim.tbl_deep_extend("force", M.config, opts or {})
-
+local function setup_autocmds()
 	-- Create autocommand group for the plugin
 	local group = vim.api.nvim_create_augroup("JupyterAscending", { clear = true })
 
@@ -237,6 +241,62 @@ function M.setup(opts)
 			desc = "Set Up Jupyter Ascending keymaps for *.sync.py files",
 		})
 	end
+	vim.notify("[JupyterAscending] Plugin is active", vim.log.levels.INFO)
 end
+
+local function clear_autocmds()
+	pcall(vim.api.nvim_del_augroup_by_name, "JupyterAscending")
+end
+
+---@param opts table? Optional configuration table to override defaults
+function M.setup(opts)
+	-- Merge user config with defaults
+	M.config = vim.tbl_deep_extend("force", M.config, opts or {})
+
+	if M.config.enabled then
+		setup_autocmds()
+	else
+		clear_autocmds()
+	end
+end
+
+-- Register commands
+local cmd_prefix = M.config.command_prefix
+
+vim.api.nvim_create_user_command(cmd_prefix .. "Sync", function()
+	M.sync()
+end, { desc = "Sync current file with Jupyter notebook" })
+
+vim.api.nvim_create_user_command(cmd_prefix .. "Execute", function()
+	M.execute()
+end, { desc = "Execute current Jupyter cell" })
+
+vim.api.nvim_create_user_command(cmd_prefix .. "ExecuteAll", function()
+	M.execute_all()
+end, { desc = "Execute all Jupyter cells" })
+
+vim.api.nvim_create_user_command(cmd_prefix .. "Restart", function()
+	M.restart()
+end, { desc = "Restart Jupyter kernel" })
+
+vim.api.nvim_create_user_command(cmd_prefix .. "Enable", function()
+	if M.config.enabled then
+		vim.notify("[JupyterAscending] Plugin is already enabled", vim.log.levels.INFO)
+		return
+	end
+	M.config.enabled = true
+	setup_autocmds()
+	vim.notify("[JupyterAscending] Plugin enabled", vim.log.levels.INFO)
+end, { desc = "Enable Jupyter Ascending plugin" })
+
+vim.api.nvim_create_user_command(cmd_prefix .. "Disable", function()
+	if not M.config.enable then
+		vim.notify("[JupyterAscending] Plugin is already disabled", vim.log.levels.INFO)
+		return
+	end
+	M.config.enabled = false
+	clear_autocmds()
+	vim.notify("[JupyterAscending] Plugin disabled", vim.log.levels.INFO)
+end, { desc = "Disable Jupyter Ascending plugin" })
 
 return M
