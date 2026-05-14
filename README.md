@@ -58,6 +58,9 @@ The plugin comes with sensible defaults but can be customized using the setup fu
 
 ```lua
 require("jupyter_ascending").setup({
+    -- Boolean to enable or disable the plugin (default: false)
+    enabled = false
+
     -- Path to Python executable (default: "python")
     python_executable = "python",
     
@@ -159,7 +162,7 @@ python -m jupyter nbclassic
 
 When using `nbclassic` the notebook has to be running at `localhost:8888/nbclassic/notebooks`.
 
-3. Edit the `example.sync.py` file in Neovim
+3. Edit the `example.sync.py` file in Neovim. By default the plugin is not enabled. `:JupyterEnable` will enable the plugin
 
 4. Use the provided keymaps or commands to interact with the notebook:
 
@@ -175,6 +178,8 @@ When using `nbclassic` the notebook has to be running at `localhost:8888/nbclass
    - :JupyterExecute
    - :JupyterExecuteAll
    - :JupyterRestart
+   - :JupyterEnable
+   - :JupyterDisable
 
 The plugin will automatically sync changes to the notebook file when you save the Python file (if `auto_write` is enabled).
 
