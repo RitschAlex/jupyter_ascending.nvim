@@ -59,7 +59,7 @@ The plugin comes with sensible defaults but can be customized using the setup fu
 ```lua
 require("jupyter_ascending").setup({
     -- Boolean to enable or disable the plugin (default: false)
-    enabled = false
+    enabled = false,
 
     -- Path to Python executable (default: "python")
     python_executable = "python",

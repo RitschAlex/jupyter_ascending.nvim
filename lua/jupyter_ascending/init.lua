@@ -290,7 +290,7 @@ vim.api.nvim_create_user_command(cmd_prefix .. "Enable", function()
 end, { desc = "Enable Jupyter Ascending plugin" })
 
 vim.api.nvim_create_user_command(cmd_prefix .. "Disable", function()
-	if not M.config.enable then
+	if not M.config.enabled then
 		vim.notify("[JupyterAscending] Plugin is already disabled", vim.log.levels.INFO)
 		return
 	end
