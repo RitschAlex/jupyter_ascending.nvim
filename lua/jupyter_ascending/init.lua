@@ -193,6 +193,35 @@ end
 -- Setup Function
 -------------------------------------------------------------------------------
 
+---@param bufnr integer Buffer number to set up keymaps for
+local function setup_keymaps_for_buffer(bufnr)
+	if not M.config.default_mappings then
+		return
+	end
+
+	local keymap_prefix = M.config.keymap_prefix
+	local keymap_opts = {
+		noremap = true,
+		silent = true,
+		buffer = bufnr,
+	}
+
+	-- Execute current cell
+	vim.keymap.set("n", keymap_prefix .. "x", function()
+		M.execute()
+	end, vim.tbl_extend("force", keymap_opts, { desc = "Execute current Jupyter cell" }))
+
+	-- Execute all cells
+	vim.keymap.set("n", keymap_prefix .. "X", function()
+		M.execute_all()
+	end, vim.tbl_extend("force", keymap_opts, { desc = "Execute all Jupyter cells" }))
+
+	-- Restart kernel
+	vim.keymap.set("n", keymap_prefix .. "r", function()
+		M.restart()
+	end, vim.tbl_extend("force", keymap_opts, { desc = "Restart Jupyter kernel" }))
+end
+
 local function setup_autocmds()
 	-- Create autocommand group for the plugin
 	local group = vim.api.nvim_create_augroup("JupyterAscending", { clear = true })
@@ -211,37 +240,16 @@ local function setup_autocmds()
 		})
 	end
 
-	-- Set up default keymaps if enabled
 	if M.config.default_mappings then
-		local keymap_prefix = M.config.keymap_prefix
 		vim.api.nvim_create_autocmd("BufRead", {
 			pattern = "*" .. M.config.match_pattern,
 			group = group,
-			callback = function()
-				local keymap_opts = {
-					noremap = true,
-					silent = true,
-				}
-
-				-- Execute current cell
-				vim.keymap.set("n", keymap_prefix .. "x", function()
-					M.execute()
-				end, vim.tbl_extend("force", keymap_opts, { desc = "Execute current Jupyter cell" }))
-
-				-- Execute all cells
-				vim.keymap.set("n", keymap_prefix .. "X", function()
-					M.execute_all()
-				end, vim.tbl_extend("force", keymap_opts, { desc = "Execute all Jupyter cells" }))
-
-				-- Restart kernel
-				vim.keymap.set("n", keymap_prefix .. "r", function()
-					M.restart()
-				end, vim.tbl_extend("force", keymap_opts, { desc = "Restart Jupyter kernel" }))
+			callback = function(args)
+				setup_keymaps_for_buffer(args.buf)
 			end,
 			desc = "Set Up Jupyter Ascending keymaps for *.sync.py files",
 		})
 	end
-	vim.notify("[JupyterAscending] Plugin is active", vim.log.levels.INFO)
 end
 
 local function clear_autocmds()
@@ -286,6 +294,16 @@ vim.api.nvim_create_user_command(cmd_prefix .. "Enable", function()
 	end
 	M.config.enabled = true
 	setup_autocmds()
+
+	-- Set up keymaps for current buffer if it matches the pattern
+	local current_buf = vim.api.nvim_get_current_buf()
+	local bufname = vim.api.nvim_buf_get_name(current_buf)
+	local pattern = M.config.match_pattern:gsub("%.", "%%.")
+
+	if bufname:match(pattern .. "$") and M.config.default_mappings then
+		setup_keymaps_for_buffer(current_buf)
+	end
+
 	vim.notify("[JupyterAscending] Plugin enabled", vim.log.levels.INFO)
 end, { desc = "Enable Jupyter Ascending plugin" })
 
@@ -295,6 +313,15 @@ vim.api.nvim_create_user_command(cmd_prefix .. "Disable", function()
 		return
 	end
 	M.config.enabled = false
+
+	if M.config.default_mappings then
+		local current_buf = vim.api.nvim_get_current_buf()
+		local keymap_prefix = M.config.keymap_prefix
+		pcall(vim.api.nvim_buf_del_keymap, current_buf, "n", keymap_prefix .. "x")
+		pcall(vim.api.nvim_buf_del_keymap, current_buf, "n", keymap_prefix .. "X")
+		pcall(vim.api.nvim_buf_del_keymap, current_buf, "n", keymap_prefix .. "r")
+	end
+
 	clear_autocmds()
 	vim.notify("[JupyterAscending] Plugin disabled", vim.log.levels.INFO)
 end, { desc = "Disable Jupyter Ascending plugin" })
