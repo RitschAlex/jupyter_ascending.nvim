@@ -13,7 +13,7 @@ A Neovim plugin for seamless integration with Jupyter notebooks through [Jupyter
 
 ## Prerequisites
 
-- Neovim >= 0.9.0
+- Neovim >= 0.10.0
 - Python 3.x
 - Jupyter Ascending package (`pip install jupyter_ascending` or `pip install git+https://github.com/RitschAlex/jupyter_ascending.git`)
 
@@ -77,10 +77,10 @@ require("jupyter_ascending").setup({
     timeout = 10000,
 
     -- Keymap Prefix (default: "<space><space>")
-    keymap_prefix = "<space><space>"
+    keymap_prefix = "<space><space>",
 
     -- Command Line Prefix (default: "Jupyter")
-    command_prefix = "Jupyter"
+    command_prefix = "Jupyter",
 })
 ```
 
@@ -137,51 +137,71 @@ end, { desc = "Restart Jupyter kernel" })
 
 ## Usage
 
-1. Create a pair of synced Python and Jupyter notebook files:
+### 1. Create a Synced File Pair
+
+Generate a `.sync.py` / `.sync.ipynb` file pair from the command line:
 
 ```bash
 python -m jupyter_ascending.scripts.make_pair --base example
 ```
 
-This creates two files:
+This creates two linked files:
 
-- `example.sync.py`: The Python file you'll edit in Neovim
-- `example.sync.ipynb`: The Jupyter notebook file
+| File | Purpose |
+|------|---------|
+| `example.sync.py` | Python source you edit in Neovim |
+| `example.sync.ipynb` | Jupyter notebook kept in sync automatically |
 
-2. Start Jupyter and open the notebook:
+### 2. Launch Jupyter
 
+Start the notebook server and open the `.sync.ipynb` file:
+
+**Standard Jupyter:**
 ```bash
 python -m jupyter notebook example.sync.ipynb
 ```
 
-If using `nbclassic`:
-
+**nbclassic** (legacy interface):
 ```bash
 python -m jupyter nbclassic
 ```
+> **Note:** When using `nbclassic`, the notebook must be accessible at  
+> `localhost:8888/nbclassic/notebooks`.
 
-When using `nbclassic` the notebook has to be running at `localhost:8888/nbclassic/notebooks`.
+### 3. Edit in Neovim
 
-3. Edit the `example.sync.py` file in Neovim. By default the plugin is not enabled. `:JupyterEnable` will enable the plugin
+Open `example.sync.py` in Neovim. The plugin ships **disabled by default** —
+activate it with:
 
-4. Use the provided keymaps or commands to interact with the notebook:
+```vim
+:JupyterEnable
+```
 
-    Keymaps:
+### 4. Interact with the Notebook
 
-   - Execute individual cells (`<space><space>x`)
-   - Execute all cells (`<space><space>X`)
-   - Restart the kernel (`<space><space>r`)
+Use keymaps or commands to control execution directly from Neovim.
 
-   Commands:
+**Keymaps** (active in `.sync.py` buffers):
 
-   - :JupyterSync
-   - :JupyterExecute
-   - :JupyterExecuteAll
-   - :JupyterRestart
-   - :JupyterEnable
-   - :JupyterDisable
+| Key | Action |
+|-----|--------|
+| `<space><space>x` | Execute current cell |
+| `<space><space>X` | Execute all cells |
+| `<space><space>r` | Restart Jupyter kernel |
 
-The plugin will automatically sync changes to the notebook file when you save the Python file (if `auto_write` is enabled).
+**Commands:**
+
+| Command | Effect |
+|---------|--------|
+| `:JupyterSync` | Sync `.py` → `.ipynb` |
+| `:JupyterExecute` | Execute current cell |
+| `:JupyterExecuteAll` | Execute all cells |
+| `:JupyterRestart` | Restart kernel |
+| `:JupyterEnable` | Enable the plugin |
+| `:JupyterDisable` | Disable the plugin |
+
+> **Auto‑sync:** When `auto_write = true` (the default), saving the Python file  
+> automatically syncs changes to the notebook.
 
 ## Planned future enhancements
 
