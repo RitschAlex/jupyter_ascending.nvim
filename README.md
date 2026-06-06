@@ -14,8 +14,10 @@ A Neovim plugin for seamless integration with Jupyter notebooks through [Jupyter
 ## Prerequisites
 
 - Neovim >= 0.10.0
-- Python 3.x
-- Jupyter Ascending package (`pip install jupyter_ascending` or `pip install git+https://github.com/RitschAlex/jupyter_ascending.git`)
+- Python >= 3.10
+- Jupyter Ascending package (`pip install git+https://github.com/RitschAlex/jupyter_ascending.git` or `pip install jupyter_ascending`)
+
+> Note: The PyPI package [imbue-ai/jupyter_ascending](https://github.com/imbue-ai/jupyter_ascending) is unmaintained and only supports Jupyter Notebook v6. The GitHub installation recommended above, `RitschAlex/jupyter_ascending`,  is a fork of `imbue-ai/jupyter_ascending` and supports Jupyter Notebook v7+, nbclassic and JupyterLab.
 
 ## Installation
 
