@@ -196,11 +196,19 @@ end
 -- Setup Function
 -------------------------------------------------------------------------------
 
+M._initialized_buffers = M._initialized_buffers or {}
+
 ---@param bufnr integer Buffer number to set up keymaps for
 local function setup_keymaps_for_buffer(bufnr)
 	if not M.config.default_mappings then
 		return
 	end
+
+	-- Track initialized buffers
+	if M._initialized_buffers[bufnr] then
+		return
+	end
+	M._initialized_buffers[bufnr] = true
 
 	local keymap_prefix = M.config.keymap_prefix
 	local keymap_opts = {
@@ -254,17 +262,13 @@ local function register_commands()
 			vim.notify("[JupyterAscending] Plugin is already enabled", vim.log.levels.INFO)
 			return
 		end
+
 		M.config.enabled = true
 		setup_autocmds()
 
-		-- Set up keymaps for current buffer if it matches the pattern
-		local current_buf = vim.api.nvim_get_current_buf()
-		local bufname = vim.api.nvim_buf_get_name(current_buf)
-		local pattern = M.config.match_pattern:gsub("%.", "%%.")
-
-		if bufname:match(pattern .. "$") and M.config.default_mappings then
-			setup_keymaps_for_buffer(current_buf)
-		end
+		vim.api.nvim_exec_autocmds("BufEnter", {
+			buffer = vim.api.nvim_get_current_buf(),
+		})
 
 		vim.notify("[JupyterAscending] Plugin enabled", vim.log.levels.INFO)
 	end, { desc = "Enable Jupyter Ascending plugin" })
@@ -285,6 +289,7 @@ local function register_commands()
 		end
 
 		clear_autocmds()
+
 		vim.notify("[JupyterAscending] Plugin disabled", vim.log.levels.INFO)
 	end, { desc = "Disable Jupyter Ascending plugin" })
 end
@@ -317,7 +322,7 @@ setup_autocmds = function()
 	end
 
 	if M.config.default_mappings then
-		vim.api.nvim_create_autocmd("BufRead", {
+		vim.api.nvim_create_autocmd({ "BufReadPost", "BufEnter", "BufNewFile" }, {
 			pattern = "*" .. M.config.match_pattern,
 			group = group,
 			callback = function(args)
@@ -334,6 +339,10 @@ end
 clear_autocmds = function()
 	-- Clear existing JupyterAscending augroup
 	pcall(vim.api.nvim_del_augroup_by_name, "JupyterAscending")
+
+	-- Reset initialized buffers tracking
+	M._initialized_buffers = {}
+
 	-- Unregister commands with prefix
 	unregister_commands()
 end
@@ -343,16 +352,20 @@ function M.setup(opts)
 	-- Merge user config with defaults
 	M.config = vim.tbl_deep_extend("force", {}, defaults, opts or {})
 
-	local current_buf = vim.api.nvim_get_current_buf()
-	local bufname = vim.api.nvim_buf_get_name(current_buf)
-	local pattern = M.config.match_pattern:gsub("%.", "%%.")
+	-- Clear autocmds if exist
+	clear_autocmds()
 
 	-- Run setup only if current buffer matches the match_pattern and enabled == true
-	if M.config.enabled and bufname:match(pattern .. "$") then
-		setup_autocmds()
-	else
-		clear_autocmds()
+	if not M.config.enabled then
+		return
 	end
+
+	setup_autocmds()
+
+	-- If in a matching buffer, trigger BufEnter once
+	vim.api.nvim_exec_autocmds({ "BufReadPost", "BufEnter", "BufNewFile" }, {
+		buffer = vim.api.nvim_get_current_buf(),
+	})
 end
 
 return M
