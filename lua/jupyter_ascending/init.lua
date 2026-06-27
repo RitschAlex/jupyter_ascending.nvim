@@ -281,11 +281,14 @@ local function register_commands()
 		M.config.enabled = false
 
 		if M.config.default_mappings then
-			local current_buf = vim.api.nvim_get_current_buf()
 			local keymap_prefix = M.config.keymap_prefix
-			pcall(vim.api.nvim_buf_del_keymap, current_buf, "n", keymap_prefix .. "x")
-			pcall(vim.api.nvim_buf_del_keymap, current_buf, "n", keymap_prefix .. "X")
-			pcall(vim.api.nvim_buf_del_keymap, current_buf, "n", keymap_prefix .. "r")
+			for buf_nr, initialized in pairs(M._initialized_buffers) do
+				if initialized and vim.api.nvim_buf_is_valid(buf_nr) then
+					pcall(vim.api.nvim_buf_del_keymap, buf_nr, "n", keymap_prefix .. "x")
+					pcall(vim.api.nvim_buf_del_keymap, buf_nr, "n", keymap_prefix .. "X")
+					pcall(vim.api.nvim_buf_del_keymap, buf_nr, "n", keymap_prefix .. "r")
+				end
+			end
 		end
 
 		clear_autocmds()
