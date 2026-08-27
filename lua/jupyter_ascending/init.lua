@@ -13,9 +13,11 @@ local defaults = {
 	timeout = 10000,
 	keymap_prefix = "<space><space>",
 	command_prefix = "Jupyter",
+	notebook_command = { "jupyter", "notebook" },
 }
 
 M.config = vim.deepcopy(defaults)
+M._server = nil
 
 -------------------------------------------------------------------------------
 -- Helper Functions
@@ -102,6 +104,29 @@ local function check_enabled()
 		return false
 	end
 	return true
+end
+
+-- Return paired .ipynb notebook file
+--- @return string|nil
+local function get_paired_notebook_file()
+	local py_file = is_sync_py_file()
+	if not py_file then
+		return nil
+	end
+
+	local ipynb_file = py_file():gsub("$$", ".ipynb")
+	if not vim.uv.fs_stat(ipynb_file) then
+		vim.schedule(function()
+			vim.notify(
+				"[JupyterAscending] Paired notebook file not found: "
+					.. ipynb_file
+					.. ". Create it with: python -m jupyter_ascending.scripts.make_pair --base"
+					.. vim.fn.fnamemodify(py_file, ":t:r:r"),
+				vim.log.levels.ERROR
+			)
+		end)
+	end
+	return notebook_file
 end
 
 -------------------------------------------------------------------------------
