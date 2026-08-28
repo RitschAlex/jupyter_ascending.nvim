@@ -17,7 +17,6 @@ local defaults = {
 }
 
 M.config = vim.deepcopy(defaults)
-M._server = nil
 
 -------------------------------------------------------------------------------
 -- Helper Functions
@@ -85,7 +84,6 @@ end
 -- Check if current file matches the jupyter notebook pattern
 ---@return string|false filename if matches, false otherwise
 local function is_sync_py_file()
-	-- Currently unused since we check this in the autocommand, but can be useful for future features
 	local file_name = vim.fn.expand("%:p")
 	if string.find(file_name, M.config.match_pattern) then
 		return file_name
@@ -114,7 +112,7 @@ local function get_paired_notebook_file()
 		return nil
 	end
 
-	local ipynb_file = py_file():gsub("$$", ".ipynb")
+	local ipynb_file = py_file:gsub("%.py$", ".ipynb")
 	if not vim.uv.fs_stat(ipynb_file) then
 		vim.schedule(function()
 			vim.notify(
@@ -125,8 +123,19 @@ local function get_paired_notebook_file()
 				vim.log.levels.ERROR
 			)
 		end)
+		return nil
 	end
-	return notebook_file
+
+	return ipynb_file
+end
+
+-- Build the notebook server command from config
+---@param ipynb_file string Path to the paired notebook
+---@return string[]
+local function build_server_command(ipynb_file)
+	local cmd = vim.list_extend({ M.config.python_executable, "-m" }, vim.deepcopy(M.config.notebook_command))
+	table.insert(cmd, ipynb_file)
+	return cmd
 end
 
 -------------------------------------------------------------------------------
@@ -217,10 +226,125 @@ function M.restart()
 	vim.api.nvim_echo({ { "[JupyterAscending] Restarting the kernel ...", "Normal" } }, false, {})
 end
 
+-- Start a jupyter notebook server for the paired notebook of the current file
+function M.start_server()
+	if not check_enabled() then
+		return
+	end
+
+	local ipynb_file = get_paired_notebook_file()
+	if not ipynb_file then
+		return
+	end
+
+	if M._server then
+		vim.notify(
+			"[JupyterAscending] Notebook server is already running for " .. M._server.notebook,
+			vim.log.levels.INFO
+		)
+		return
+	end
+
+	-- vim.cmd("botright new")
+	-- local bufnr = vim.api.nvim_get_current_buf()
+	-- vim.api.nvim_buf_set_name(bufnr, "jupyter-server://" .. vim.fn.fnamemodify(ipynb_file, ":t"))
+	local bufname = "jupyter-server://" .. vim.fs.basename(ipynb_file)
+	local bufnr = vim.api.nvim_create_buf(true, false)
+	vim.api.nvim_buf_set_name(bufnr, bufname)
+
+	vim.bo[bufnr].swapfile = false
+	vim.bo[bufnr].buftype = "nofile"
+
+	vim.api.nvim_open_win(bufnr, true, {
+		split = "below",
+		win = -1,
+	})
+
+	local notified = false
+	local job_id = vim.fn.jobstart(build_server_command(ipynb_file), {
+		term = true,
+		cwd = vim.fs.dirname(ipynb_file),
+		on_stdout = function(_, data)
+			if not data then
+				return
+			end
+			for _, line in ipairs(data) do
+				local port = line:match("http://localhost:(%d+)") or line:match("http://127%.0%.0%.1:(%d+)")
+				if port and not notified then
+					notified = true
+					vim.schedule(function()
+						vim.notify(
+							string.format("[JupyterAscending] Notebook server started at http://localhost:%s", port),
+							vim.log.levels.INFO
+						)
+						if tonumber(port) ~= 8888 then
+							vim.notify(
+								string.format(
+									"[JupyterAscending] Note: The server is running on a non-default port (%s). You may need to adjust your Jupyter configuration accordingly.",
+									port
+								),
+								vim.log.levels.WARN
+							)
+						end
+					end)
+					break
+				end
+			end
+		end,
+		on_exit = function(_, exit_code)
+			vim.schedule(function()
+				if M._server and M._server.job_id == job_id then
+					M._server = nil
+				end
+				if exit_code == 0 or exit_code == 15 or exit_code == 130 or exit_code == 143 then
+					vim.notify("[JupyterAscending] Notebook server stopped", vim.log.levels.INFO)
+				else
+					vim.notify(
+						string.format("[JupyterAscending] Notebook server exited with code %d", exit_code),
+						vim.log.levels.ERROR
+					)
+				end
+			end)
+		end,
+	})
+
+	if job_id <= 0 then
+		vim.api.nvim_buf_delete(bufnr, { force = true })
+		if job_id == -1 then
+			vim.notify(
+				"[JupyterAscending] Failed to start notebook server: '"
+					.. M.config.python_executable
+					.. "' is not executable.",
+				vim.log.levels.ERROR
+			)
+		else
+			vim.notify("[JupyterAscending] Failed to start notebook server process", vim.log.levels.ERROR)
+		end
+		return
+	end
+
+	M._server = { job_id = job_id, bufnr = bufnr, notebook = ipynb_file }
+	vim.api.nvim_echo({ { "[JupyterAscending] Starting notebook server ...", "Normal" } }, false, {})
+end
+
+-- Stop the running jupyter server
+function M.stop_server()
+	if not M._server then
+		vim.notify("[JupyterAscending] No running Jupyter server to stop", vim.log.levels.INFO)
+		return
+	end
+
+	if vim.fn.jobstop(M._server.job_id) == 0 then
+		-- Job was already dead and on_exit may not fire; clean up defensively
+		M._server = nil
+	end
+end
+
 -------------------------------------------------------------------------------
 -- Setup Function
 -------------------------------------------------------------------------------
 
+M._server = nil
 M._initialized_buffers = M._initialized_buffers or {}
 
 ---@param bufnr integer Buffer number to set up keymaps for
@@ -282,6 +406,14 @@ local function register_commands()
 		M.restart()
 	end, { desc = "Restart Jupyter kernel" })
 
+	vim.api.nvim_create_user_command(cmd_prefix .. "StartServer", function()
+		M.start_server()
+	end, { desc = "Start Jupyter notebook server for the current notebook" })
+
+	vim.api.nvim_create_user_command(cmd_prefix .. "StopServer", function()
+		M.stop_server()
+	end, { desc = "Stop the running Jupyter notebook server" })
+
 	vim.api.nvim_create_user_command(cmd_prefix .. "Enable", function()
 		if M.config.enabled then
 			vim.notify("[JupyterAscending] Plugin is already enabled", vim.log.levels.INFO)
@@ -329,6 +461,8 @@ local function unregister_commands()
 	pcall(vim.api.nvim_del_user_command, M.config.command_prefix .. "ExecuteAll")
 	pcall(vim.api.nvim_del_user_command, M.config.command_prefix .. "Restart")
 	pcall(vim.api.nvim_del_user_command, M.config.command_prefix .. "Disable")
+	pcall(vim.api.nvim_del_user_command, M.config.command_prefix .. "StartServer")
+	pcall(vim.api.nvim_del_user_command, M.config.command_prefix .. "StopServer")
 end
 
 setup_autocmds = function()
