@@ -245,65 +245,82 @@ function M.start_server()
 		return
 	end
 
-	-- vim.cmd("botright new")
-	-- local bufnr = vim.api.nvim_get_current_buf()
-	-- vim.api.nvim_buf_set_name(bufnr, "jupyter-server://" .. vim.fn.fnamemodify(ipynb_file, ":t"))
+	local currwin = vim.api.nvim_get_current_win()
 	local bufname = "jupyter-server://" .. vim.fs.basename(ipynb_file)
 	local bufnr = vim.api.nvim_create_buf(true, false)
 	vim.api.nvim_buf_set_name(bufnr, bufname)
-
 	vim.bo[bufnr].swapfile = false
 	vim.bo[bufnr].buftype = "nofile"
-
-	vim.api.nvim_open_win(bufnr, true, {
-		split = "below",
-		win = -1,
-	})
+	vim.bo[bufnr].bufhidden = "wipe"
+	vim.cmd("tab sbuffer " .. bufnr)
+	setup_server_autocmd(bufnr)
 
 	local notified = false
-	local job_id = vim.fn.jobstart(build_server_command(ipynb_file), {
-		term = true,
-		cwd = vim.fs.dirname(ipynb_file),
-		on_stdout = function(_, data)
-			if not data then
-				return
+	local function handle_output(_, data)
+		if not data then
+			return
+		end
+
+		-- mirror logs to buffer
+		local lines = {}
+		for _, line in pairs(data) do
+			if line ~= "" then
+				table.insert(lines, line)
 			end
-			for _, line in ipairs(data) do
-				local port = line:match("http://localhost:(%d+)") or line:match("http://127%.0%.0%.1:(%d+)")
-				if port and not notified then
-					notified = true
-					vim.schedule(function()
-						vim.notify(
-							string.format("[JupyterAscending] Notebook server started at http://localhost:%s", port),
-							vim.log.levels.INFO
-						)
-						if tonumber(port) ~= 8888 then
-							vim.notify(
-								string.format(
-									"[JupyterAscending] Note: The server is running on a non-default port (%s). You may need to adjust your Jupyter configuration accordingly.",
-									port
-								),
-								vim.log.levels.WARN
-							)
-						end
-					end)
-					break
+		end
+		if #lines > 0 then
+			vim.schedule(function()
+				if vim.api.nvim_buf_is_valid(bufnr) then
+					vim.api.nvim_buf_set_lines(bufnr, -1, -1, false, lines)
 				end
+			end)
+		end
+
+		-- parse port from either stdout or stderr
+		for _, line in ipairs(data) do
+			local port = line:match("http://localhost:(%d+)") or line:match("http://127%.0%.0%.1:(%d+)")
+			if port and not notified then
+				notified = true
+				vim.schedule(function()
+					vim.notify(
+						string.format("[JupyterAscending] Notebook server started at http://localhost:%s", port),
+						vim.log.levels.INFO
+					)
+					if tonumber(port) ~= 8888 then
+						vim.notify(
+							string.format(
+								"[JupyterAscending] Note: The server is running on a non-default port (%s). You may need to adjust your Jupyter configuration accordingly.",
+								port
+							),
+							vim.log.levels.WARN
+						)
+					end
+				end)
+				break
 			end
-		end,
+		end
+	end
+
+	local job_id = vim.fn.jobstart(build_server_command(ipynb_file), {
+		cwd = vim.fs.dirname(ipynb_file),
+		term = false,
+		on_stdout = handle_output,
+		on_stderr = handle_output,
 		on_exit = function(_, exit_code)
 			vim.schedule(function()
-				if M._server and M._server.job_id == job_id then
-					M._server = nil
-				end
-				if exit_code == 0 or exit_code == 15 or exit_code == 130 or exit_code == 143 then
+				if exit_code == 0 or exit_code == 15 or exit_code == 130 or exit_code == 137 or exit_code == 143 then
 					vim.notify("[JupyterAscending] Notebook server stopped", vim.log.levels.INFO)
+					-- vim.api.nvim_buf_delete(M._server.bufnr, { force = true })
 				else
 					vim.notify(
 						string.format("[JupyterAscending] Notebook server exited with code %d", exit_code),
 						vim.log.levels.ERROR
 					)
 				end
+				if vim.api.nvim_buf_is_valid(bufnr) then
+					vim.api.nvim_buf_delete(bufnr, { force = true })
+				end
+				M._server = nil
 			end)
 		end,
 	})
@@ -325,6 +342,13 @@ function M.start_server()
 
 	M._server = { job_id = job_id, bufnr = bufnr, notebook = ipynb_file }
 	vim.api.nvim_echo({ { "[JupyterAscending] Starting notebook server ...", "Normal" } }, false, {})
+
+	-- jump back, keep server tab in background
+	vim.defer_fn(function()
+		if vim.api.nvim_win_is_valid(currwin) then
+			vim.api.nvim_set_current_win(currwin)
+		end
+	end, 3000)
 end
 
 -- Stop the running jupyter server
@@ -335,7 +359,7 @@ function M.stop_server()
 	end
 
 	if vim.fn.jobstop(M._server.job_id) == 0 then
-		-- Job was already dead and on_exit may not fire; clean up defensively
+		-- Job was already dead and on_exit may not fire
 		M._server = nil
 	end
 end
@@ -496,6 +520,19 @@ setup_autocmds = function()
 
 	-- Register commands with prefix
 	register_commands()
+end
+
+setup_server_autocmd = function(bufnr)
+	vim.api.nvim_create_autocmd({ "BufWipeout", "BufDelete" }, {
+		group = vim.api.nvim_create_augroup("JupyterAscendingServer-" .. bufnr, { clear = true }),
+		buffer = bufnr,
+		callback = function()
+			if M._server and M._server.bufnr == bufnr then
+				pcall(vim.fn.jobstop, M._server.job_id)
+			end
+		end,
+		desc = "Stop Jupyter server when its tab/buffer is closed",
+	})
 end
 
 clear_autocmds = function()
