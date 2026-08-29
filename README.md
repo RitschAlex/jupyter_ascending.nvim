@@ -5,10 +5,12 @@ A Neovim plugin for seamless integration with Jupyter notebooks through [Jupyter
 
 ## Features
 
-- Automatic synchronization between `.sync.py` files and `.ipynb` notebooks
+- Cell executions
+- Automatic synchronization between `.sync.py` files and `.sync.ipynb` notebooks
+- Start and stop the Jupyter notebook server from within Neovim
+- Live server logs in a dedicated tab with automatic cleanup
 - Execute individual cells or entire notebooks
 - Restart Jupyter kernels
-- Smart cursor-based cell execution
 - Configurable auto-sync on save
 
 ## Prerequisites
@@ -17,7 +19,7 @@ A Neovim plugin for seamless integration with Jupyter notebooks through [Jupyter
 - Python >= 3.10
 - Jupyter Ascending package (`pip install git+https://github.com/RitschAlex/jupyter_ascending.git` or `pip install jupyter_ascending`)
 
-> Note: The PyPI package [imbue-ai/jupyter_ascending](https://github.com/imbue-ai/jupyter_ascending) is unmaintained and only supports Jupyter Notebook v6. The GitHub installation recommended above, `RitschAlex/jupyter_ascending`,  is a fork of `imbue-ai/jupyter_ascending` and supports Jupyter Notebook v7+, nbclassic and JupyterLab.
+> Note: The PyPI package [imbue-ai/jupyter_ascending](https://github.com/imbue-ai/jupyter_ascending) is unmaintained and only supports Jupyter Notebook v6. The GitHub installation recommended above, `RitschAlex/jupyter_ascending`, is a fork of `imbue-ai/jupyter_ascending` and supports Jupyter Notebook v7+, nbclassic and JupyterLab.
 
 ## Installation
 
@@ -43,25 +45,14 @@ require("jupyter_ascending").setup()
 
 ```
 
-Using [packer.nvim](https://github.com/wbthomason/packer.nvim):
-
-```lua
-use {
-    "RitschAlex/jupyter_ascending.nvim",
-    config = function()
-        require("jupyter_ascending").setup()
-    end
-}
-```
-
 ## Configuration
 
 The plugin comes with sensible defaults but can be customized using the setup function:
 
 ```lua
 require("jupyter_ascending").setup({
-    -- Boolean to enable or disable the plugin (default: false)
-    enabled = false,
+    -- Boolean to enable or disable the plugin (default: true)
+    enabled = true,
 
     -- Path to Python executable (default: "python")
     python_executable = "python",
@@ -83,6 +74,10 @@ require("jupyter_ascending").setup({
 
     -- Command Line Prefix (default: "Jupyter")
     command_prefix = "Jupyter",
+
+    -- Command used to launch the notebook server, appended after "python -m"
+    -- (default: { "jupyter", "notebook" })
+    notebook_command = { "jupyter", "notebook" },
 })
 ```
 
@@ -112,6 +107,12 @@ require("jupyter_ascending").execute_all()
 
 -- Restart the Jupyter kernel
 require("jupyter_ascending").restart()
+
+-- Start a Jupyter notebook server for the paired notebook of the current file
+require("jupyter_ascending").start_server()
+
+-- Stop the running Jupyter notebook server
+require("jupyter_ascending").stop_server()
 ```
 
 ## Custom Keymaps
@@ -156,9 +157,20 @@ This creates two linked files:
 
 ### 2. Launch Jupyter
 
-Start the notebook server and open the `.sync.ipynb` file:
+Start the notebook server and open the `.sync.ipynb` file.
 
-**Standard Jupyter:**
+**From Neovim** (with the `.sync.py` file open):
+
+```vim
+:JupyterStartServer
+```
+
+> - Launches the server for the paired `.sync.ipynb` and opens a dedicated tab with live server logs.
+> - Stopping the server: `:JupyterStopServer`, closing the server tab, or quitting Neovim.
+> - The paired notebook must exist (see step 1); otherwise an error with the `make_pair` command is shown.
+> - Jupyter Ascending expects the server at `localhost:8888` — the plugin warns if the server ends up on a different port.
+
+**Standard Jupyter (from a shell):**
 ```bash
 python -m jupyter notebook example.sync.ipynb
 ```
@@ -168,15 +180,17 @@ python -m jupyter notebook example.sync.ipynb
 python -m jupyter nbclassic
 ```
 > **Note:** When using `nbclassic`, the notebook must be accessible at  
-> `localhost:8888/nbclassic/notebooks`.
+> `localhost:8888/nbclassic/notebooks`. To launch it via `:JupyterStartServer`,  
+> set `notebook_command = { "jupyter", "nbclassic" }` in your setup.
 
 ### 3. Edit in Neovim
 
-Open `example.sync.py` in Neovim. The plugin ships **disabled by default** —
-activate it with:
+Open `example.sync.py` in Neovim. The plugin ships **enabled by default** —
+it can be toggled with:
 
 ```vim
 :JupyterEnable
+:JupyterDisable
 ```
 
 ### 4. Interact with the Notebook
@@ -189,16 +203,18 @@ Use keymaps or commands to control execution directly from Neovim.
 |-----|--------|
 | `<space><space>x` | Execute current cell |
 | `<space><space>X` | Execute all cells |
-| `<space><space>r` | Restart Jupyter kernel |
+| `<space><space>r` | Restart kernel |
 
 **Commands:**
 
 | Command | Effect |
 |---------|--------|
-| `:JupyterSync` | Sync `.py` → `.ipynb` |
+| `:JupyterSync` | Sync `.py` -> `.ipynb` |
 | `:JupyterExecute` | Execute current cell |
 | `:JupyterExecuteAll` | Execute all cells |
 | `:JupyterRestart` | Restart kernel |
+| `:JupyterStartServer` | Start notebook server for the paired `.sync.ipynb` |
+| `:JupyterStopServer` | Stop the running notebook server |
 | `:JupyterEnable` | Enable the plugin |
 | `:JupyterDisable` | Disable the plugin |
 
@@ -223,7 +239,7 @@ the following core features will be added:
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please feel free to open a Issue or submit a Pull Request.
 
 ## License
 
