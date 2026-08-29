@@ -118,7 +118,7 @@ local function get_paired_notebook_file()
 			vim.notify(
 				"[JupyterAscending] Paired notebook file not found: "
 					.. ipynb_file
-					.. ". Create it with: python -m jupyter_ascending.scripts.make_pair --base"
+					.. ". Create it with: python -m jupyter_ascending.scripts.make_pair --base "
 					.. vim.fn.fnamemodify(py_file, ":t:r:r"),
 				vim.log.levels.ERROR
 			)
@@ -227,6 +227,7 @@ function M.restart()
 end
 
 -- Start a jupyter notebook server for the paired notebook of the current file
+local setup_server_autocmd
 function M.start_server()
 	if not check_enabled() then
 		return
@@ -263,7 +264,7 @@ function M.start_server()
 
 		-- mirror logs to buffer
 		local lines = {}
-		for _, line in pairs(data) do
+		for _, line in ipairs(data) do
 			if line ~= "" then
 				table.insert(lines, line)
 			end
@@ -304,13 +305,13 @@ function M.start_server()
 	local job_id = vim.fn.jobstart(build_server_command(ipynb_file), {
 		cwd = vim.fs.dirname(ipynb_file),
 		term = false,
+		env = { PYTHONUNBUFFERED = "1" }, -- Ensure unbuffered output for real-time logging
 		on_stdout = handle_output,
 		on_stderr = handle_output,
 		on_exit = function(_, exit_code)
 			vim.schedule(function()
 				if exit_code == 0 or exit_code == 15 or exit_code == 130 or exit_code == 137 or exit_code == 143 then
 					vim.notify("[JupyterAscending] Notebook server stopped", vim.log.levels.INFO)
-					-- vim.api.nvim_buf_delete(M._server.bufnr, { force = true })
 				else
 					vim.notify(
 						string.format("[JupyterAscending] Notebook server exited with code %d", exit_code),
@@ -344,11 +345,11 @@ function M.start_server()
 	vim.api.nvim_echo({ { "[JupyterAscending] Starting notebook server ...", "Normal" } }, false, {})
 
 	-- jump back, keep server tab in background
-	vim.defer_fn(function()
-		if vim.api.nvim_win_is_valid(currwin) then
-			vim.api.nvim_set_current_win(currwin)
-		end
-	end, 3000)
+	-- vim.defer_fn(function()
+	-- 	if vim.api.nvim_win_is_valid(currwin) then
+	-- 		vim.api.nvim_set_current_win(currwin)
+	-- 	end
+	-- end, 3000)
 end
 
 -- Stop the running jupyter server
@@ -524,7 +525,7 @@ end
 
 setup_server_autocmd = function(bufnr)
 	vim.api.nvim_create_autocmd({ "BufWipeout", "BufDelete" }, {
-		group = vim.api.nvim_create_augroup("JupyterAscendingServer-" .. bufnr, { clear = true }),
+		group = vim.api.nvim_create_augroup("JupyterAscendingServer", { clear = true }),
 		buffer = bufnr,
 		callback = function()
 			if M._server and M._server.bufnr == bufnr then
@@ -538,6 +539,7 @@ end
 clear_autocmds = function()
 	-- Clear existing JupyterAscending augroup
 	pcall(vim.api.nvim_del_augroup_by_name, "JupyterAscending")
+	pcall(vim.api.nvim_del_augroup_by_name, "JupyterAscendingServer")
 
 	-- Reset initialized buffers tracking
 	M._initialized_buffers = {}
@@ -548,11 +550,11 @@ end
 
 ---@param opts table? Optional configuration table to override defaults
 function M.setup(opts)
-	-- Merge user config with defaults
-	M.config = vim.tbl_deep_extend("force", {}, defaults, opts or {})
-
 	-- Clear autocmds if exist
 	clear_autocmds()
+
+	-- Merge user config with defaults
+	M.config = vim.tbl_deep_extend("force", {}, defaults, opts or {})
 
 	-- Run setup only if current buffer matches the match_pattern and enabled == true
 	if not M.config.enabled then
