@@ -1,6 +1,7 @@
 # Jupyter_Ascending.nvim
 
 A Neovim plugin for seamless integration with Jupyter notebooks through [Jupyter Ascending](https://github.com/RitschAlex/jupyter_ascending). This plugin allows you to edit and execute Jupyter notebooks using regular Python files while maintaining synchronization with the notebook format.
+
 ![](https://github.com/RitschAlex/jupyter_ascending.nvim/blob/main/demo.gif)
 
 ## Features
@@ -168,7 +169,7 @@ Start the notebook server and open the `.sync.ipynb` file.
 > - Launches the server for the paired `.sync.ipynb` and opens a dedicated tab with live server logs.
 > - Stopping the server: `:JupyterStopServer`, closing the server tab, or quitting Neovim.
 > - The paired notebook must exist (see step 1); otherwise an error with the `make_pair` command is shown.
-> - Jupyter Ascending expects the server at `localhost:8888` — the plugin warns if the server ends up on a different port.
+> - Jupyter Ascending expects the server at `localhost:8888`; the plugin warns if the server ends up on a different port.
 
 **Standard Jupyter (from a shell):**
 ```bash
@@ -179,13 +180,11 @@ python -m jupyter notebook example.sync.ipynb
 ```bash
 python -m jupyter nbclassic
 ```
-> **Note:** When using `nbclassic`, the notebook must be accessible at  
-> `localhost:8888/nbclassic/notebooks`. To launch it via `:JupyterStartServer`,  
-> set `notebook_command = { "jupyter", "nbclassic" }` in your setup.
+> **Note:** When using `nbclassic`, the notebook must be accessible at `localhost:8888/nbclassic/notebooks`. To launch it via `:JupyterStartServer`, set `notebook_command = { "jupyter", "nbclassic" }` in your setup.
 
 ### 3. Edit in Neovim
 
-Open `example.sync.py` in Neovim. The plugin ships **enabled by default** —
+Open `example.sync.py` in Neovim. The plugin ships **enabled by default**,
 it can be toggled with:
 
 ```vim
@@ -209,7 +208,7 @@ Use keymaps or commands to control execution directly from Neovim.
 
 | Command | Effect |
 |---------|--------|
-| `:JupyterSync` | Sync `.py` -> `.ipynb` |
+| `:JupyterSync` | Sync `.py` &rarr; `.ipynb` |
 | `:JupyterExecute` | Execute current cell |
 | `:JupyterExecuteAll` | Execute all cells |
 | `:JupyterRestart` | Restart kernel |
@@ -218,8 +217,7 @@ Use keymaps or commands to control execution directly from Neovim.
 | `:JupyterEnable` | Enable the plugin |
 | `:JupyterDisable` | Disable the plugin |
 
-> **Auto‑sync:** When `auto_write = true` (the default), saving the Python file  
-> automatically syncs changes to the notebook.
+> **Auto‑sync:** When `auto_write = true` (the default), saving the Python file automatically syncs changes to the notebook.
 
 ## Planned future enhancements
 
