@@ -204,6 +204,22 @@ function M.execute_all()
 	vim.api.nvim_echo({ { "[JupyterAscending] Executing all cells", "Normal" } }, false, {})
 end
 
+-- Interrupt the Jupyter kernel
+function M.interrupt()
+	if not check_enabled() then
+		return
+	end
+
+	local file_name = vim.fn.expand("%:p")
+	execute_command({
+		M.config.python_executable,
+		"-m",
+		"jupyter_ascending.requests.interrupt",
+		"--filename",
+		file_name,
+	}, nil, "Kernel interrupted successfully")
+end
+
 -- Restart the Jupyter kernel
 function M.restart()
 	if not check_enabled() then
@@ -401,6 +417,11 @@ local function setup_keymaps_for_buffer(bufnr)
 		M.execute_all()
 	end, vim.tbl_extend("force", keymap_opts, { desc = "Execute all Jupyter cells" }))
 
+	-- Interrupt kernel
+	vim.keymap.set("n", keymap_prefix .. "i", function()
+		M.interrupt()
+	end, vim.tbl_extend("force", keymap_opts, { desc = "Interrupt Jupyter kernel" }))
+
 	-- Restart kernel
 	vim.keymap.set("n", keymap_prefix .. "r", function()
 		M.restart()
@@ -426,6 +447,10 @@ local function register_commands()
 	vim.api.nvim_create_user_command(cmd_prefix .. "ExecuteAll", function()
 		M.execute_all()
 	end, { desc = "Execute all Jupyter cells" })
+
+	vim.api.nvim_create_user_command(cmd_prefix .. "Interrupt", function()
+		M.interrupt()
+	end, { desc = "Interrupt the Jupyter kernel" })
 
 	vim.api.nvim_create_user_command(cmd_prefix .. "Restart", function()
 		M.restart()

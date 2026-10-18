@@ -91,6 +91,7 @@ When `default_mappings` is enabled, the following keymaps are available in `.syn
 | `<space><space>x` | Execute current cell |
 | `<space><space>X` | Execute all cells |
 | `<space><space>r` | Restart Jupyter kernel |
+| `<space><space>i` | Interrupt Jupyter kernel |
 
 ## API
 
@@ -108,6 +109,9 @@ require("jupyter_ascending").execute_all()
 
 -- Restart the Jupyter kernel
 require("jupyter_ascending").restart()
+
+-- Interrupt the Jupyter kernel
+require("jupyter_ascending").interrupt()
 
 -- Start a Jupyter notebook server for the paired notebook of the current file
 require("jupyter_ascending").start_server()
@@ -133,6 +137,10 @@ end, { desc = "Execute current Jupyter cell" })
 vim.keymap.set("n", "<leader>ja", function()
     require("jupyter_ascending").execute_all()
 end, { desc = "Execute all Jupyter cells" })
+
+vim.keymap.set("n", "<leader>ji", function()
+    require("jupyter_ascending").interrupt()
+end, { desc = "Interrupt Jupyter kernel" })
 
 vim.keymap.set("n", "<leader>jr", function()
     require("jupyter_ascending").restart()
@@ -202,6 +210,7 @@ Use keymaps or commands to control execution directly from Neovim.
 |-----|--------|
 | `<space><space>x` | Execute current cell |
 | `<space><space>X` | Execute all cells |
+| `<space><space>i` | Interrupt kernel |
 | `<space><space>r` | Restart kernel |
 
 **Commands:**
@@ -212,6 +221,7 @@ Use keymaps or commands to control execution directly from Neovim.
 | `:JupyterExecute` | Execute current cell |
 | `:JupyterExecuteAll` | Execute all cells |
 | `:JupyterRestart` | Restart kernel |
+| `:JupyterInterrupt` | Interrupt kernel |
 | `:JupyterStartServer` | Start notebook server for the paired `.sync.ipynb` |
 | `:JupyterStopServer` | Stop the running notebook server |
 | `:JupyterEnable` | Enable the plugin |
